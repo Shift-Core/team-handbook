@@ -147,7 +147,7 @@ The `scope` is optional, but recommended when the change belongs to a specific a
 
 ---
 
-## What Is a Scope?
+## What is a Scope?
 
 The scope explains the area affected by the change.
 

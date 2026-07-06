@@ -6,7 +6,7 @@ A Pull Request is required for every change before it is merged into `main`.
 
 ---
 
-## What Is a Pull Request?
+## What is a Pull Request?
 
 A Pull Request, also called PR, is a request to merge changes from one branch into another branch.
 
