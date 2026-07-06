@@ -126,6 +126,7 @@ Optional:
 ```bash
 git diff
 ```
+> Also, you can use "source control" in vs-code its built-in ext.
 
 Use this to review your changes locally before committing.
 
