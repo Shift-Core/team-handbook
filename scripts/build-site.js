@@ -1,13 +1,21 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 
 const rootDir = process.cwd();
+const execFileAsync = promisify(execFile);
 const outputDir = path.join(rootDir, "dist");
 const publicDir = path.join(rootDir, "public");
 const stylesPath = path.join(rootDir, "src", "styles.css");
 const currentYear = new Date().getFullYear();
-const excludedDirs = new Set([".git", ".agents", ".codex", "dist", "node_modules", "public", "scripts", "src"]);
 const logoPath = "/assets/shift-core-logo.png";
+const docsSourceRef = process.env.DOCS_SOURCE_REF || "origin/main";
+const docsSourcePaths = (process.env.DOCS_SOURCE_PATHS || "README.md,CONTRIBUTING.md,docs")
+  .split(",")
+  .map((item) => item.trim())
+  .filter(Boolean);
+const docsAutoFetch = process.env.DOCS_AUTO_FETCH === "true";
 
 function toPosix(value) {
   return value.split(path.sep).join("/");
@@ -275,23 +283,50 @@ function renderMarkdown(markdown, currentFile, routeByPath) {
   return blocks.join("\n\n");
 }
 
-async function findMarkdownFiles(directory = rootDir) {
-  const entries = await fs.readdir(directory, { withFileTypes: true });
-  const files = [];
+async function git(args, options = {}) {
+  const { stdout } = await execFileAsync("git", args, {
+    cwd: rootDir,
+    maxBuffer: 1024 * 1024 * 20,
+    ...options
+  });
+  return stdout;
+}
 
-  for (const entry of entries) {
-    if (entry.isDirectory()) {
-      if (excludedDirs.has(entry.name)) continue;
-      files.push(...(await findMarkdownFiles(path.join(directory, entry.name))));
-      continue;
-    }
+function parseSourceRef(ref) {
+  const match = ref.match(/^origin\/(.+)$/);
+  if (!match) return null;
+  return match[1];
+}
 
-    if (entry.isFile() && entry.name.toLowerCase().endsWith(".md")) {
-      files.push(path.join(directory, entry.name));
-    }
-  }
+async function refreshDocsSourceRef() {
+  if (!docsAutoFetch) return;
 
-  return files;
+  const remoteBranch = parseSourceRef(docsSourceRef);
+  if (!remoteBranch) return;
+
+  await git(["fetch", "origin", remoteBranch, "--depth=1"]);
+}
+
+async function findMarkdownFilesFromGit() {
+  await refreshDocsSourceRef();
+
+  const output = await git([
+    "ls-tree",
+    "-r",
+    "--name-only",
+    docsSourceRef,
+    "--",
+    ...docsSourcePaths
+  ]);
+
+  return output
+    .split("\n")
+    .map((item) => item.trim())
+    .filter((item) => item.toLowerCase().endsWith(".md"));
+}
+
+async function readMarkdownFromGit(relativePath) {
+  return git(["show", `${docsSourceRef}:${relativePath}`]);
 }
 
 function comparePaths(left, right) {
@@ -455,15 +490,14 @@ async function writePage(route, html) {
 }
 
 async function build() {
-  const files = await findMarkdownFiles();
+  const files = await findMarkdownFilesFromGit();
   const pages = [];
   const routeByPath = new Map();
 
-  for (const file of files) {
-    const relativePath = toPosix(path.relative(rootDir, file));
-    const markdown = await fs.readFile(file, "utf8");
+  for (const relativePath of files) {
+    const markdown = await readMarkdownFromGit(relativePath);
     const page = {
-      file,
+      file: `${docsSourceRef}:${relativePath}`,
       relativePath,
       route: routeForFile(relativePath),
       title: titleFromMarkdown(markdown, titleFromName(path.basename(relativePath))),
@@ -511,7 +545,7 @@ async function build() {
   });
   await fs.writeFile(path.join(outputDir, "404.html"), notFoundHtml);
 
-  console.log(`Built ${pages.length} pages into dist/`);
+  console.log(`Built ${pages.length} pages from ${docsSourceRef} into dist/`);
 }
 
 build().catch((error) => {
