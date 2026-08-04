@@ -198,6 +198,23 @@ Do not plan using theoretical capacity when team members have limited availabili
 
 ---
 
+## Workflow Selection Before Delivery
+
+Before the first sprint, the team must decide:
+
+* Whether the project requires a separate `Testing` status
+* Who performs testing
+* Which types of work require testing
+* What evidence is required
+* How failed testing returns to implementation
+* Whether Bugs are fixed inside the original task or tracked separately
+* Whether user acceptance testing is required
+* Who has authority to accept the final output
+
+The selected workflow must be configured in Jira and documented before the sprint starts.
+
+---
+
 ## Capacity Planning
 
 Sprint scope must be based on realistic capacity.
@@ -435,11 +452,23 @@ Do not use multiple `In Progress` items to show artificial activity.
 
 The task owner is responsible for keeping the status accurate.
 
-The normal flow is:
+The normal task flow depends on the workflow configured for the project.
+
+Core workflow:
 
 ```text
 Ready for Sprint → In Progress → Code Review → Done
 ```
+
+Extended workflow with a separate testing stage:
+
+```text
+Ready for Sprint → In Progress → Code Review → Testing → Done
+```
+
+The team must follow the workflow configured in the active Jira project.
+
+Tasks must not skip required review or testing stages.
 
 Status meaning and movement requirements are defined in [Jira Workflow](jira-workflow.md).
 
@@ -448,6 +477,7 @@ Tasks must not remain:
 * In `Ready for Sprint` after active work has started
 * In `In Progress` after active work has stopped without explanation
 * In `Code Review` without a reviewer or reviewable output
+* In `Testing` without an assigned validator or testable output
 * In `Done` without meeting the completion requirements
 
 Jira must reflect the real state of the work.
@@ -553,6 +583,16 @@ Testing may include:
 * Stakeholder acceptance
 
 Testing is not assumed to be complete only because implementation is complete.
+
+When the project uses a separate `Testing` status:
+
+* Move the task to `Testing` only after the output is ready for validation
+* Assign or identify the responsible tester
+* Record the tested environment and result
+* Attach test evidence
+* Return failed work to `In Progress`
+* Repeat Code Review when the correction changes reviewed implementation
+* Move the task to `Done` only after required testing passes
 
 When a defect is found:
 

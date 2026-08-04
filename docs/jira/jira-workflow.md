@@ -72,19 +72,38 @@ Do not start work directly from an unrefined backlog item.
 
 ## Workflow
 
-The team uses the following workflow:
+Every ShiftCore Jira project must use a defined workflow that matches the type of work being delivered.
+
+The core workflow is:
 
 ```text
 To Do → Ready for Sprint → In Progress → Code Review → Done
 ```
 
-Blocked work is handled using a Jira flag and issue links rather than a normal workflow status.
+Projects that require a separate quality assurance or validation stage should use the extended workflow:
+
+```text
+To Do → Ready for Sprint → In Progress → Code Review → Testing → Done
+```
+
+The project workflow must be selected and configured in Jira before active delivery begins.
+
+Do not document or use a status that is not configured in the Jira project.
+
+Blocked work is handled using a Jira flag and issue links rather than a normal workflow status:
 
 ```text
 Current Status + Flagged as Blocked
 ```
 
-Testing and validation are completion requirements. They are not separate workflow statuses unless the project workflow explicitly includes a dedicated testing status.
+Testing may be:
+
+* A completion requirement inside the current task
+* A separate `Testing` status
+* A separate testing task
+* A combination of these approaches
+
+The project must define which approach it uses before sprint planning.
 
 ---
 
@@ -95,7 +114,8 @@ Testing and validation are completion requirements. They are not separate workfl
 | `To Do`             | The task exists but may still need refinement, prioritization, estimation, assignment, or clarification |
 | `Ready for Sprint`  | The task meets the readiness requirements and can be selected for a sprint                              |
 | `In Progress`       | The assigned owner is actively working on the task                                                      |
-| `Code Review`       | The completed output is waiting for reviewer validation or Pull Request approval                        |
+| `Code Review`       | The completed output is waiting for technical, content, or peer review                                  |
+| `Testing`           | The reviewed output is being validated against its acceptance criteria before final acceptance          |
 | `Done`              | Acceptance criteria are met, required evidence is available, and the output is accepted                 |
 | `Flagged / Blocked` | The task cannot continue and its blocker is documented, communicated, and linked                        |
 
@@ -185,6 +205,70 @@ For non-code work:
 
 A task must not be moved to `Code Review` while major known work is still incomplete.
 
+After Code Review:
+
+* Move the task to `Testing` when the project requires a separate validation stage.
+* Move the task to `Done` only when no separate Testing status is configured and all required validation has already been completed.
+* Return the task to `In Progress` when implementation changes are required.
+
+---
+
+### Testing
+
+Use `Testing` when the project has a separate testing or quality assurance stage.
+
+Move a task to `Testing` when:
+
+* The implementation or required output is complete
+* Required code or peer review is completed
+* The output is available in a testable environment or format
+* Acceptance criteria are ready to be validated
+* Required test data and dependencies are available
+* The tester or validator is identified
+* The required evidence format is known
+
+Testing may include:
+
+* Functional testing
+* Integration testing
+* Regression testing
+* User interface validation
+* API validation
+* Security validation
+* Documentation validation
+* Configuration validation
+* Data validation
+* User acceptance testing
+
+During Testing:
+
+* Validate the output against the acceptance criteria
+* Record the test result
+* Attach or link the required evidence
+* Create or link Bug issues for defects that need separate tracking
+* Return the task for correction when acceptance criteria are not met
+* Do not move the task to `Done` while required tests are failing
+
+If Testing passes:
+
+```text
+Testing → Done
+```
+
+If implementation changes are required:
+
+```text
+Testing → In Progress
+```
+
+If the correction has been completed and requires another review:
+
+```text
+In Progress → Code Review → Testing
+```
+
+A task must not remain in `Testing` without an assigned validator, test result, or clear next action.
+
 ---
 
 ### Done
@@ -195,11 +279,23 @@ Move a task to `Done` only when:
 * The required output is delivered
 * The required reviewer has accepted the output
 * Required evidence is attached or linked
-* Testing or validation is completed when required
+* Required testing or validation has passed
 * Documentation is updated when required
-* New dependencies created by the task are documented
 * No unresolved blocker remains
+* No unresolved required defect remains
 * The Jira task reflects the final delivered scope
+
+When the project uses a separate `Testing` status:
+
+* The task must pass through `Testing`
+* The final test result must be recorded
+* Required defects must be resolved or formally accepted
+* The tester or validator must confirm the result
+
+When the project does not use a separate `Testing` status:
+
+* Required validation must be completed before moving from `Code Review` to `Done`
+* Validation evidence must still be attached or linked
 
 For repository changes:
 
